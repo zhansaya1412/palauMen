@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th = "http://www.thymeleaf.org"
+      xmlns:sec = "http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
+      xmlns:layout = "http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="main_layout.html">
+<div layout:fragment="content" sec:authorize="hasAnyRole('ROLE_ADMIN')">
+  <div class="content-container">
+    <div class="row">
+      <div class="col-11">
+        <input class="form-control me-2" placeholder="Найти..." aria-label="Search" id="searchQuery" name="search">
+      </div>
+      <div class="col-1">
+        <div class="text-end">
+          <button class="btn btn-success" id="searchBtn">Искать</button>
+        </div>
+      </div>
+    </div>
+    <div id="contentCatalogueEmp">
+      <div class="row">
+        <div class="col-12">
+          <div class="row" id="employeeContent"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    loadEmployees();
+    function loadEmployees(){
+      const request = new XMLHttpRequest(); // <form>
+      request.onload = (e) => {
+        let result = JSON.parse(request.responseText) //converts to Array
+        employeeContentHTML = "";
+        for (i = 0; i<result.length; i++) {
+          employeeContentHTML += "<div class = 'col-3'>";
+          employeeContentHTML += "<div class = 'card mt-3 Employee'>";
+          employeeContentHTML += "<h5 class = 'card-header'>" + " Карта сотрудника:" + "</h5>";
+          employeeContentHTML += "<h5 class = 'card-header'>" + result[i].users.fullname +"</h5>";
+          employeeContentHTML += "<img src='/view_avatar/" + result[i].users.avatar + "' class='card-img-top'/>";
+          employeeContentHTML += "<div class = 'card-body'>";
+          employeeContentHTML += "<h3 class = 'card-title'>" + result[i].position + "</h3>";
+          employeeContentHTML += "<p>"  + " Email: " + result[i].users.email + "</p>";
+          employeeContentHTML+="<p>"  + " Номер: "+ result[i].users.phone +"</p>";
+          employeeContentHTML+="<p>" + " Принят на работу: " + result[i].employmentStart +"</p>";
+          employeeContentHTML+="<p>" + " Зарплата: "+ result[i].salary +"</p>";
+          employeeContentHTML+="<p>" + " Статус работника: "+ result[i].employmentStatus +"</p>";
+          employeeContentHTML += "</div>";
+          employeeContentHTML += "</div>";
+          employeeContentHTML += "</div>";
+        }
+        employeeContent.innerHTML = employeeContentHTML;
+      };
+      request.open("GET", "/employee");
+      request.send();
+    }
+
+    <!-- Измененное содержимое -->
+    function changeEmployeesList() {
+      // Изменяем содержимое
+      document.getElementById("contentCatalogueEmp").innerHTML = `
+                <div class = 'col mt-3'>
+                <div class="container Employee">
+                <table class="table table-striped-columns">
+				    <thead>
+				        <tr>
+				            <th scope="col class="text-center"> ID:</th>
+				            <th scope="col class="text-center"> ФИО:</th>
+				            <th scope="col class="text-center"> Email:</th>
+				            <th scope="col class="text-center"> Телефон:</th>
+				            <th scope="col class="text-center"> Должность:</th>
+				            <th scope="col class="text-center"> Зарплата:</th>
+				            <th scope="col class="text-center"> Принят:</th>
+				            <th scope="col class="text-center"> Уволен:</th>
+				            <th scope="col class="text-center"> Статус:</th>
+				            <th scope="col class="text-center"> Доступ:</th>
+				            <th scope="col class="text-center"> Подробнее:</th>
+				        </tr>
+				    </thead>
+				    <tbody id="empContentList">
+				    </tbody>
+				 </table>
+				 </div>
+                </div>`;
+      loadEmpList();
+    }
+
+    function loadEmpList(){
+      const request = new XMLHttpRequest(); // <form>
+      request.onload = (e) => {
+        let result = JSON.parse(request.responseText) //converts to Array
+        empContentListHTML = "";
+        for (i = 0; i<result.length; i++) {
+          empContentListHTML += "<tr>";
+          empContentListHTML += "<th scope='row'>" + result[i].id + "</th>";
+          empContentListHTML += "<td>" + result[i].users.fullname + "</td>";
+          empContentListHTML += "<td>" + result[i].users.email + "</td>";
+          empContentListHTML += "<td>" + result[i].users.phone + "</td>";
+          empContentListHTML += "<td>" + result[i].position + "</td>";
+          empContentListHTML += "<td>" + result[i].salary + "</td>";
+          empContentListHTML += "<td>" + result[i].employmentStart + "</td>";
+          empContentListHTML += "<td>" + result[i].employmentEnd + "</td>";
+          empContentListHTML += "<td>" + result[i].employmentStatus + "</td>";
+          empContentListHTML += "<td>";
+          for (j = 0; j < result[i].users.roles.length; j++) {
+            empContentListHTML += result[i].users.roles[j].role + " ";
+          }
+          empContentListHTML += "<td>";
+          empContentListHTML += "<a href='/foodDetails/" + result[i].foodUrl + "' class='btn btn-primary btn-sm' " +
+                  "style='background-color: #411811'>Изменить</a>";
+          empContentListHTML += "</td>";
+          empContentListHTML += "</tr>";
+        }
+        empContentList.innerHTML = empContentListHTML;
+      };
+      request.open("GET", "/employee");
+      request.send();
+    }
+
+    const searchBtn = document.getElementById('searchBtn');
+    const query = document.getElementById("searchQuery");
+
+    function search() {
+      const query = searchQuery.value;
+      const request = new XMLHttpRequest();
+      request.onload = (e) => {
+        let result = JSON.parse(request.responseText) //converts to Array
+        employeeContentHTML = "";
+        for (i = 0; i<result.length; i++) {
+          employeeContentHTML += "<div class = 'col-3'>";
+          employeeContentHTML += "<div class = 'card mt-3 Employee'>";
+          employeeContentHTML += "<h5 class = 'card-header'></h5>";
+          employeeContentHTML += "<div class = 'card-body'>";
+          employeeContentHTML+="<p>" + " Карта сотрудника:" + result[i].position +"</p>";
+          employeeContentHTML += "<h5 class = 'card-title'>" + result[i].users.fullname + "</h5>";
+          employeeContentHTML += "<p>"  + " Email: " + result[i].users.email + "</p>";
+          employeeContentHTML+="<p>"  + " Номер: "+ result[i].users.phone +"</p>";
+          employeeContentHTML+="<p>" + " Принят на работу: " + result[i].employmentStart +"</p>";
+          employeeContentHTML+="<p>" + " Зарплата: "+ result[i].salary +"</p>";
+          employeeContentHTML+="<p>" + " Статус работника: "+ result[i].employmentStatus +"</p>";
+          employeeContentHTML += "</div>";
+          employeeContentHTML += "</div>";
+          employeeContentHTML += "</div>";
+        }
+        employeeContent.innerHTML = employeeContentHTML;
+      };
+      request.open("GET", "/employee/search?q=" + query);
+      request.send();
+    }
+
+    searchBtn.addEventListener('click', search);
+    searchQuery.addEventListener('keyup', function(event) {
+      if (event.key === 'Enter') {
+        search();
+      }
+    });
+  </script>
+</div>
+</html>

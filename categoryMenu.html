@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th = "http://www.thymeleaf.org"
+      xmlns:sec = "http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
+      xmlns:layout = "http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="main_layout.html">
+<div layout:fragment="content" sec:authorize="hasAnyRole('ROLE_ADMIN')">
+  <div class="content-container">
+    <div class="row mt-3">
+      <div class="col-12">
+        <div>
+          <button type="button" class="btn btn-primary" style="background-color: #411811" onclick="openAddCategory()">
+            Добавить новую категорию</button>
+        </div>
+      </div>
+    </div>
+    <div class="row mt-3">
+      <div class="col-12">
+        <div class="container menu">
+          <table class="table table-striped-columns">
+            <thead>
+            <tr>
+              <th scope="col"> ID:</th>
+              <th scope="col"> Название:</th>
+              <th scope="col"> URL:</th>
+              <th scope="col"> Цена за:</th>
+              <th scope="col"></th>
+            </tr>
+            </thead>
+            <tbody id="categoryTable">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="addCategory" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+       aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="staticBackdropLabel" style="color: white">Новая категория </h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row mt-3">
+            <div class="col-12">
+              <div>
+                <label> Название: </label>
+              </div>
+            </div>
+          </div>
+          <div class="row mt-2">
+            <div class="col-12">
+              <div>
+                <input type="text" class="form-control" id="nameCategory">
+              </div>
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col-12">
+              <div>
+                <label> URL: </label>
+              </div>
+            </div>
+          </div>
+          <div class="row mt-2">
+            <div class="col-12">
+              <div>
+                <input type="text" class="form-control" id="urlCategory">
+              </div>
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col-12">
+              <div>
+                <label>Цена за: </label>
+              </div>
+            </div>
+          </div>
+          <div class="row mt-2">
+            <div class="col-12">
+              <div>
+                <input type="text" class="form-control" id="priceFor">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" onclick="addCategory()">Сохранить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="delete" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-body">
+          Данная категория удалена!
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary"  data-bs-dismiss="modal">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    var modalAddCategory = new bootstrap.Modal(document.getElementById('addCategory'))
+    var modalDelete = new bootstrap.Modal(document.getElementById('delete'));
+
+    loadCategoryMenu();
+    function loadCategoryMenu(){
+      const request = new XMLHttpRequest();
+      request.onload = (e) => {
+        let result = JSON.parse(request.responseText)
+        categoryTableHTML = "";
+        for (i = 0; i<result.length; i++) {
+          categoryTableHTML += "<tr>";
+          categoryTableHTML += "<th scope='row'>" + result[i].id + "</th>";
+          categoryTableHTML += "<td>" + result[i].name + "</td>";
+          categoryTableHTML += "<td>" + result[i].url + "</td>";
+          categoryTableHTML += "<td>" + result[i].priceFor + "</td>";
+          categoryTableHTML +="<td>";
+          categoryTableHTML += "<a class='btn btn-sm btn-danger' onclick='deleteCategory(" + result[i].id + ")' " +
+                   "style='background-color: #411811'>X</a>";
+          categoryTableHTML += "</td>";
+          categoryTableHTML += "</tr>";
+        }
+        categoryTable.innerHTML = categoryTableHTML;
+      };
+      request.open("GET", "/category");
+      request.send();
+    }
+
+    function openAddCategory(){
+      modalAddCategory.show()
+    }
+    function addCategory(){
+      const request = new XMLHttpRequest();
+      request.open("POST", '/category', true);
+      request.setRequestHeader("Content-Type", "application/json");
+      request.onreadystatechange = () => {
+        if (request.readyState === XMLHttpRequest.DONE && request.status === 200) {
+          loadCategoryMenu()
+        }
+      }
+      const category = {
+        "name":  nameCategory.value ,
+        "url": urlCategory.value,
+        "priceFor": priceFor.value,
+      }
+      request.send(JSON.stringify(category));
+      nameCategory.value = "";
+      urlCategory.value = "";
+      priceFor.value = "";
+      modalAddCategory.hide()
+    }
+
+    function deleteCategory(id){
+      var conf = confirm("Вы действительно хотите удалить?");
+      if(conf){
+        const request = new XMLHttpRequest();
+        request.open("DELETE", '/category/'+ id, true);
+        request.onreadystatechange = () => {
+          if (request.readyState === XMLHttpRequest.DONE) {
+            if (request.status === 200) {
+              loadCategoryMenu();
+              modalDelete.show();
+            } else {
+              alert("Эта категория не может быть удалена, так как она связана с другими таблицами.");
+            }
+          }
+        };
+        request.send();
+      }
+    }
+  </script>
+</div>
+</html>
